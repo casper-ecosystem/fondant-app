@@ -6,7 +6,7 @@ services:
       context: ./cctl-container
       dockerfile: Dockerfile.dev
       args:
-        NODE_GITBRANCH: release-1.5.6
+        NODE_GITBRANCH: release-2.0.0
         CLIENT_GITBRANCH: release-2.0.0
     ports:
       - "3001:3001"
