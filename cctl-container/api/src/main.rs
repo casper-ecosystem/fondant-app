@@ -152,14 +152,14 @@ fn status() -> Json<ActivationResponse> {
 
 #[get("/cache/events/<node_number>")]
 fn get_events(node_number: i32) -> Option<Json<Vec<String>>> {
-    let event_url = format!("http://localhost/node-{}/sse/events/main", node_number);
+    let event_url = format!("http://localhost/node-{}/events/", node_number);
     let events = CACHE.lock().unwrap().get_data(&event_url).map(Json);
     events.map(|events| Json(events.0[1..].to_vec()))
 }
 
 #[get("/cache/deploys/<node_number>")]
 fn get_deploys(node_number: i32) -> Option<Json<Vec<String>>> {
-    let event_url = format!("http://localhost/node-{}/sse/events/main", node_number);
+    let event_url = format!("http://localhost/node-{}/events/", node_number);
     let events = CACHE.lock().unwrap().get_data(&event_url).map(Json);
     //if string contains "Deploy" then add to the return list
     let deploys = events.map(|events| {
