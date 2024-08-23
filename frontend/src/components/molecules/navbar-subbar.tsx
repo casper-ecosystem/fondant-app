@@ -6,6 +6,7 @@ import { defaultClient } from "../../casper-client"
 import { GetStatusResult } from "casper-js-sdk"
 import { useIsNetworkRunningContext } from "../../context/IsNetworkRunningContext"
 import { useIsNetworkLaunchedContext } from "../../context/IsNetworkLaunchedContext"
+import { getCurrentBlockHeight } from "../atoms/block-utils"
 
 interface NavbarSubbarProps {
     isMobile: boolean
@@ -116,8 +117,10 @@ const NavbarSubbar: React.FC<NavbarSubbarProps> = ({ isMobile }) => {
     const fetchLatestBlock = async () => {
         try {
             const latestBlockInfo = await defaultClient.casperService.getLatestBlockInfo()
-            if (latestBlockInfo && latestBlockInfo.block) {
-                setCurrentBlock(latestBlockInfo.block.header.height)
+            const block = latestBlockInfo.block_with_signatures?.block
+            if (latestBlockInfo && block) {
+                const currentHeight = getCurrentBlockHeight(block)
+                setCurrentBlock(currentHeight)
             }
         } catch (error) {
             console.error("Error fetching latest block info:", error)
