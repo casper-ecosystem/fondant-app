@@ -78,11 +78,15 @@ pub fn parse_node_ports() -> HashMap<String, HashMap<String, i32>> {
             current_node_name = format!("node-{}", &caps[1]);
         } else if let Some(caps) = service_port_regex.captures(line) {
             let service_name = caps[1].to_string();
-            let port = caps[2].parse::<i32>().unwrap();
+            let mut port = caps[2].parse::<i32>().unwrap();
+            if port >= 11101 && port <= 11109 {
+                port += 10000;
+                // This should really be handled in $CCTL/cmds/infra/node/view_ports.sh
+            }
             current_services.insert(service_name, port);
         }
     }
-    
+
     if !current_node_name.is_empty() {
         node_service_ports.insert(current_node_name, current_services);
     }
@@ -111,11 +115,14 @@ http {{
         for (service_name_unready, port) in services {
             let service_name = service_name_unready.to_lowercase();
 
-            let location_block = if service_name == "rpc" {
+            let location_block = if service_name == "protocol" {
                 format!(" location /{}/", node_name)
+                // localhost/node-1/ -> localhost:21101/
+                // localhost/node-1/events -> localhost:14101/events NOT ACTIVE
             } else {
                 format!(" location /{}/{}/", node_name, service_name)
             };
+            println!("{}", location_block);
 
             let proxy_pass = format!("proxy_pass http://localhost:{}/;", port);
 
