@@ -17,7 +17,7 @@
         "@types/react": "^18.2.25",
         "@types/react-dom": "^18.2.7",
         "axios": "^0.24.0",
-        "casper-js-sdk": "^2.15.4",
+        "casper-js-sdk": "condor",
         "framer-motion": "^6.5.1",
         "hamburger-react": "^2.5.0",
         "react": "^18.2.0",
