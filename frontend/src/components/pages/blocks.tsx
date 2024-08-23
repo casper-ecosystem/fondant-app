@@ -2,12 +2,13 @@ import { useState, useEffect } from "react"
 import { Flex, VStack, Text, Button, Spinner, Box } from "@chakra-ui/react"
 import { Helmet } from "react-helmet-async"
 import BlockRowElement from "../molecules/blocks-row-element"
-import { GetBlockResult, JsonBlock } from "casper-js-sdk"
+import { Block, GetBlockResult } from "casper-js-sdk"
 import { useIsNetworkRunningContext } from "../../context/IsNetworkRunningContext"
 import { defaultClient } from "../../casper-client"
+import { getCurrentBlockHeight } from "../atoms/block-utils"
 
 const Blocks: React.FC = () => {
-    const [blocks, setBlocks] = useState<any[]>([])
+    const [blocks, setBlocks] = useState<any[]>([]) // TODO: This really needs to be of type BlockV1[] | BlockV2[]
     const [loading, setLoading] = useState<boolean>(true)
     const [error, setError] = useState<string | null>(null)
     const [currentPage, setCurrentPage] = useState<number>(1)
@@ -24,6 +25,7 @@ const Blocks: React.FC = () => {
                 let latestBlockInfo
                 try {
                     latestBlockInfo = await defaultClient.casperService.getLatestBlockInfo()
+                    console.log(latestBlockInfo) //
                 } catch (error) {
                     console.error("Error fetching latest block info:", error)
                     setBlocks([])
@@ -31,13 +33,15 @@ const Blocks: React.FC = () => {
                     return
                 }
 
-                if (!latestBlockInfo || !latestBlockInfo.block) {
+                if (!latestBlockInfo || !latestBlockInfo.block_with_signatures?.block) {
                     setBlocks([])
                     setIsLastPage(true)
                     return
                 }
 
-                const currentHeight = latestBlockInfo.block.header.height
+                const block = latestBlockInfo.block_with_signatures.block
+
+                const currentHeight = getCurrentBlockHeight(block)
 
                 const blockHeights = []
                 for (let i = 0; i < DISPLAY_PER_PAGE; i++) {
@@ -59,10 +63,20 @@ const Blocks: React.FC = () => {
                     defaultClient.casperService.getBlockInfoByHeight(height)
                 )
                 const blockInfos: GetBlockResult[] = await Promise.all(blockInfoPromises)
+                console.log(blockInfos) //
                 const newBlocks = blockInfos
-                    .map((blockInfo) => blockInfo.block)
-                    .filter((block): block is JsonBlock => block !== null)
+                    .map((blockInfo) => blockInfo.block_with_signatures?.block)
+                    .filter((block): block is Block => block !== null)
+                    .map((block) => {
+                        if ("Version2" in block) {
+                            return block.Version2
+                        } else if ("Version1" in block) {
+                            return block.Version1
+                        }
+                        throw new Error("Unexpected block type")
+                    })
 
+                console.log(newBlocks) //
                 setBlocks(newBlocks)
                 setIsLastPage(newBlocks.length < DISPLAY_PER_PAGE)
             } catch (err) {
@@ -136,7 +150,7 @@ const Blocks: React.FC = () => {
                             key={block.hash}
                             height={block.header.height}
                             era={block.header.era_id}
-                            deploys={block.body.deploy_hashes.length}
+                            transactions={Object.keys(block.body.transactions).length}
                             age={block.header.timestamp}
                             blockHash={block.hash}
                         />
