@@ -4,7 +4,7 @@ import { Flex, VStack, Text } from "@chakra-ui/react"
 interface BlockRowElementProps {
     height: number
     era: number
-    deploys: number
+    transactions: number
     age: string
     blockHash: string
 }
@@ -12,7 +12,7 @@ interface BlockRowElementProps {
 export default function BlockRowElement({
     height,
     era,
-    deploys,
+    transactions,
     age,
     blockHash,
 }: BlockRowElementProps) {
@@ -71,7 +71,7 @@ export default function BlockRowElement({
                             DEPLOYS
                         </Text>
                         <Text fontSize={fontSize} fontWeight="semibold">
-                            {deploys.toString()}
+                            {transactions.toString()}
                         </Text>
                     </VStack>
                     <VStack align="left" minWidth={"20vw"} gap={["2px", "3px", "10px"]}>
