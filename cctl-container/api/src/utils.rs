@@ -58,41 +58,42 @@ pub fn run_command(command: &str, args: Option<Vec<String>>) -> Result<CommandRe
 }
 
 pub fn parse_node_ports() -> HashMap<String, HashMap<String, i32>> {
-    let command_output = run_command("cctl-infra-node-view-ports", None).unwrap();
-    let stdout = command_output.stdout;
+    let sidecar_output = run_command("cctl-infra-sidecar-view-ports", None).unwrap();
+    let node_output = run_command("cctl-infra-node-view-ports", None).unwrap();
+
+    let sidecar_name_regex = Regex::new(r"CCTL :: SIDECAR-(\d+)").unwrap();
+    let sidecar_service_port_regex = Regex::new(r"CCTL ::\s+(MAIN-RPC)\s+[-]+> *(\d+)").unwrap();
 
     let node_name_regex = Regex::new(r"CCTL :: NODE-(\d+)").unwrap();
-    let service_port_regex = Regex::new(r"CCTL ::\s+(PROTOCOL|BINARY|REST|SSE)\s+[-]+> *(\d+)").unwrap();
+    let node_sse_port_regex = Regex::new(r"CCTL ::\s+(SSE)\s+[-]+> *(\d+)").unwrap();
 
     let mut node_service_ports = HashMap::new();
-    let mut current_node_name = String::new();
-    let mut current_services = HashMap::new();
 
-    for line in stdout.lines() {
-        if let Some(caps) = node_name_regex.captures(line) {
-            if !current_node_name.is_empty() {
-                // Save the previous node's ports
-                node_service_ports.insert(current_node_name.clone(), current_services.clone());
-            }
-            // Start a new node
-            current_node_name = format!("node-{}", &caps[1]);
-        } else if let Some(caps) = service_port_regex.captures(line) {
-            let service_name = caps[1].to_string();
-            let mut port = caps[2].parse::<i32>().unwrap();
-            if port >= 11101 && port <= 11109 {
-                port += 10000;
-                // This should really be handled in $CCTL/cmds/infra/node/view_ports.sh
-            }
-            current_services.insert(service_name, port);
-        }
-    }
+    // Parse the SIDECAR ports output
+    parse_output(&sidecar_output.stdout, &sidecar_name_regex, &sidecar_service_port_regex, &mut node_service_ports, "node-");
 
-    if !current_node_name.is_empty() {
-        node_service_ports.insert(current_node_name, current_services);
-    }
+    // Parse the NODE ports output
+    parse_output(&node_output.stdout, &node_name_regex, &node_sse_port_regex, &mut node_service_ports, "node-");
 
     node_service_ports
-}   
+}
+
+fn parse_output(output: &str, node_regex: &Regex, service_regex: &Regex, node_service_ports: &mut HashMap<String, HashMap<String, i32>>, node_prefix: &str) {
+    let mut current_node_name = String::new();
+
+    for line in output.lines() {
+        if let Some(caps) = node_regex.captures(line) {
+            current_node_name = format!("{}{}", node_prefix, &caps[1]);
+            node_service_ports.entry(current_node_name.clone()).or_insert_with(HashMap::new);
+        } else if let Some(caps) = service_regex.captures(line) {
+            if let Some(current_services) = node_service_ports.get_mut(&current_node_name) {
+                let service_name = caps[1].to_string();
+                let port = caps[2].parse::<i32>().unwrap();
+                current_services.insert(service_name, port);
+            }
+        }
+    }
+}
 
 pub fn generate_nginx_config(node_service_ports: &HashMap<String, HashMap<String, i32>>) {
     let port = match std::env::var("PROXY_PORT") {
@@ -115,10 +116,9 @@ http {{
         for (service_name_unready, port) in services {
             let service_name = service_name_unready.to_lowercase();
 
-            let location_block = if service_name == "protocol" {
+            let location_block = if service_name == "main-rpc" {
                 format!(" location /{}/", node_name)
                 // localhost/node-1/ -> localhost:21101/
-                // localhost/node-1/events -> localhost:14101/events NOT ACTIVE
             } else {
                 format!(" location /{}/{}/", node_name, service_name)
             };
