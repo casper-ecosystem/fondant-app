@@ -24,6 +24,7 @@
   "cctl-infra-node-view-status": "$CCTL/cmds/infra/node/view_status.sh",
   "cctl-infra-node-view-storage": "$CCTL/cmds/infra/node/view_storage.sh",
   "cctl-infra-node-write-rpc-schema": "$CCTL/cmds/infra/node/write_rpc_schema.sh",
+  "cctl-infra-sidecar-view-ports": "$CCTL/cmds/infra/sidecar/view_ports.sh",
   "cctl-chain-await-n-blocks": "$CCTL/cmds/chain/await/n_blocks.sh",
   "cctl-chain-await-n-eras": "$CCTL/cmds/chain/await/n_eras.sh",
   "cctl-chain-await-until-block-n": "$CCTL/cmds/chain/await/until_block_n.sh",
