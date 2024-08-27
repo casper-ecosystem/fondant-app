@@ -21,7 +21,7 @@ export default function Deploys() {
             try {
                 const response = await axios.get(`http://localhost:3001/cache/events/${nodeNumber}`)
                 const historicalDeploys = response.data
-                    .filter((e: any) => e.includes("DeployProcessed"))
+                    .filter((e: any) => e.includes("TransactionProcessed"))
                     .map((event: string) => {
                         try {
                             const json = JSON.parse(event)
