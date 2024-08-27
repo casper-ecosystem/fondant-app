@@ -79,11 +79,11 @@ fn init() -> Result<Json<ActivationResponse>, Status> {
     println!("{} nodes running.", node_count);
 
     for i in 1..node_count + 1{
-        let events = format!("http://localhost/node-{}/sse/events/main", i);
+        let events = format!("http://localhost/node-{}/sse/events", i);
         CACHE.lock().unwrap().start_listening(events);
 
-        let deploys = format!("http://localhost/node-{}/sse/events/deploys", i);
-        CACHE.lock().unwrap().start_listening(deploys);
+        //let deploys = format!("http://localhost/node-{}/events/deploys", i);
+        //CACHE.lock().unwrap().start_listening(deploys);
     }
     
     *status = "running".to_string();
@@ -152,14 +152,14 @@ fn status() -> Json<ActivationResponse> {
 
 #[get("/cache/events/<node_number>")]
 fn get_events(node_number: i32) -> Option<Json<Vec<String>>> {
-    let event_url = format!("http://localhost/node-{}/events/", node_number);
+    let event_url = format!("http://localhost/node-{}/sse/events", node_number);
     let events = CACHE.lock().unwrap().get_data(&event_url).map(Json);
     events.map(|events| Json(events.0[1..].to_vec()))
 }
 
 #[get("/cache/deploys/<node_number>")]
 fn get_deploys(node_number: i32) -> Option<Json<Vec<String>>> {
-    let event_url = format!("http://localhost/node-{}/events/", node_number);
+    let event_url = format!("http://localhost/node-{}/sse/events", node_number);
     let events = CACHE.lock().unwrap().get_data(&event_url).map(Json);
     //if string contains "Deploy" then add to the return list
     let deploys = events.map(|events| {
@@ -171,13 +171,13 @@ fn get_deploys(node_number: i32) -> Option<Json<Vec<String>>> {
 
 #[get("/cache/events/<node_number>/search?<query>")]
 fn search_events(node_number: i32, query: &str) -> Option<Json<Vec<String>>> {
-    let events = format!("http://localhost/node-{}/sse/events/main", node_number);
+    let events = format!("http://localhost/node-{}/sse/events", node_number);
     CACHE.lock().unwrap().search(&events, query).map(Json)
 }
 
 #[get("/cache/deploys/<node_number>/search?<query>")]
 fn search_deploys(node_number: i32, query: &str) -> Option<Json<Vec<String>>> {
-    let deploys = format!("http://localhost/node-{}/sse/events/deploys", node_number);
+    let deploys = format!("http://localhost/node-{}/sse/events", node_number);
     CACHE.lock().unwrap().search(&deploys, query).map(Json)
 }
 
