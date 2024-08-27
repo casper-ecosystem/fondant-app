@@ -68,7 +68,7 @@ export default function BlockRowElement({
                     </VStack>
                     <VStack align="center" minWidth={"9.5vw"} gap={["2px", "3px", "10px"]}>
                         <Text fontSize={fontSize} fontWeight="normal">
-                            DEPLOYS
+                            TRANSACTIONS
                         </Text>
                         <Text fontSize={fontSize} fontWeight="semibold">
                             {transactions.toString()}
