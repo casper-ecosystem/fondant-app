@@ -5,12 +5,13 @@ APP_NAME="Fondant"
 # Remove existing app and distribution folder if they exist
 rm -rf "${APP_NAME}.app" "${APP_NAME}.dmg"
 
+RES_DIR="${APP_NAME}.app/Contents/Resources"
 # Create the app bundle structure
 mkdir -p "${APP_NAME}.app/Contents/MacOS"
-mkdir -p "${APP_NAME}.app/Contents/Resources"
+mkdir -p "${RES_DIR}"
 
 # Copy application files into the app bundle
-cp -R ./* "${APP_NAME}.app/Contents/Resources"
+cp -R ./* "${RES_DIR}"
 cp docker-compose.yml "${APP_NAME}.app/Contents/MacOS/"
 
 
@@ -81,14 +82,14 @@ cat > "${APP_NAME}.app/Contents/Info.plist" << EOF
 </plist>
 EOF
 
-# ICONSET_DIR="/tmp/logo.iconset"
-# PNG_FILE="setup/assets/logo.png"
-# ICNS_FILE="${APP_NAME}.app/Contents/Resources/logo.icns"
+# ICONSET_DIR="assets/icon.iconset"
+# PNG_FILE="assets/icon.png"
+ICNS_FILE="${RES_DIR}/assets/icon.icns"
 
-# sed -i '' "/<key>CFBundlePackageType<\/key>/a\\
-#   <key>CFBundleIconFile<\/key>\\
-#   <string>logo.icns<\/string>\\
-# " "${APP_NAME}.app/Contents/Info.plist"
+sed -i '' "/<key>CFBundlePackageType<\/key>/a\\
+  <key>CFBundleIconFile<\/key>\\
+  <string>${ICNS_FILE}<\/string>\\
+" "${APP_NAME}.app/Contents/Info.plist"
 
 # Create the disk image
 hdiutil create -volname "${APP_NAME}" -srcfolder "${APP_NAME}.app" -ov -format UDZO "${APP_NAME}.dmg"
